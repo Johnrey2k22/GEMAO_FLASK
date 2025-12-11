@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<div class="container d-flex justify-content-center align-items-center min-vh-100">
+    <div class="card p-4 shadow" style="max-width: 420px; width: 100%;">
+        <div class="card-header text-center mb-4">
+            <h2 class="mb-0">Login</h2>
+        </div>
+        <div class="card-body">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            <form method="post" id="loginForm" novalidate>
+                <div class="mb-3">
+                    <label for="username" class="form-label">Username:</label>
+                    <input type="text" class="form-control" id="username" name="username" required
+                           minlength="3" maxlength="50" pattern="[a-zA-Z0-9_-]+">
+                    <div class="invalid-feedback">
+                        Username must be 3-50 characters and contain only letters, numbers, underscores, and hyphens.
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">Password:</label>
+                    <input type="password" class="form-control" id="password" name="password" required
+                           minlength="4" maxlength="100">
+                    <div class="invalid-feedback">
+                        Password must be 4-100 characters long.
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Login</button>
+            </form>
+        </div>
+        <div class="card-footer text-center">
+            <small>Users and admins are pre-registered.</small>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('loginForm');
+    const usernameInput = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
+
+    // Real-time validation
+    usernameInput.addEventListener('input', function() {
+        validateUsername();
+    });
+
+    passwordInput.addEventListener('input', function() {
+        validatePassword();
+    });
+
+    // Form submission validation
+    form.addEventListener('submit', function(event) {
+        if (!validateForm()) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        form.classList.add('was-validated');
+    });
+
+    function validateUsername() {
+        const username = usernameInput.value.trim();
+        let isValid = true;
+
+        if (!username) {
+            usernameInput.setCustomValidity('Username is required');
+            isValid = false;
+        } else if (username.length < 3) {
+            usernameInput.setCustomValidity('Username must be at least 3 characters long');
+            isValid = false;
+        } else if (username.length > 50) {
+            usernameInput.setCustomValidity('Username must not exceed 50 characters');
+            isValid = false;
+        } else if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
+            usernameInput.setCustomValidity('Username can only contain letters, numbers, underscores, and hyphens');
+            isValid = false;
+        } else {
+            usernameInput.setCustomValidity('');
+        }
+
+        return isValid;
+    }
+
+    function validatePassword() {
+        const password = passwordInput.value;
+        let isValid = true;
+
+        if (!password) {
+            passwordInput.setCustomValidity('Password is required');
+            isValid = false;
+        } else if (password.length < 4) {
+            passwordInput.setCustomValidity('Password must be at least 4 characters long');
+            isValid = false;
+        } else if (password.length > 100) {
+            passwordInput.setCustomValidity('Password must not exceed 100 characters');
+            isValid = false;
+        } else {
+            passwordInput.setCustomValidity('');
+        }
+
+        return isValid;
+    }
+
+    function validateForm() {
+        const isUsernameValid = validateUsername();
+        const isPasswordValid = validatePassword();
+        return isUsernameValid && isPasswordValid;
+    }
+});
+</script>
+{% endblock %}
