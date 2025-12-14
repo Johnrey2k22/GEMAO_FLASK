@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title> - Login</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Yatra+One&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+	<div class="container">
+		<header>
+			<h1>LOGIN</h1>
+			<p>Welcome! Please login to continue.</p>
+		</header>
+
+		{% with messages = get_flashed_messages(with_categories=true) %}
+			{% if messages %}
+				{% for category, message in messages %}
+					<div class="alert {{ category }}">{{ message }}</div>
+				{% endfor %}
+			{% endif %}
+		{% endwith %}
+
+		<form method="post" id="loginForm">
+			<input type="text" id="username" name="username" placeholder="Username" required>
+			<input type="password" id="password" name="password" placeholder="Password" required>
+			<button type="submit">Login</button>
+		</form>
+		<script>
+			document.getElementById('loginForm').addEventListener('submit', async function(e) {
+				e.preventDefault();
+				const response = await fetch('{{ url_for("auth.login") }}', {
+					method: 'POST',
+					body: new FormData(this),
+					headers: {
+						'X-Requested-With': 'XMLHttpRequest'
+					}
+				});
+                
+				let data;
+				try {
+					data = await response.json();
+				} catch (err) {
+					console.error('Unexpected non-JSON response from server', err);
+					return;
+				}
+
+				if (data.status === 'success' && data.redirect) {
+					window.location.href = data.redirect;
+				} else if (data.status === 'fail') {
+					if (data.message) {
+						const alert = document.createElement('div');
+						alert.className = 'alert danger';
+						alert.textContent = data.message;
+						document.querySelector('.container').insertBefore(alert, document.querySelector('.container').firstChild);
+					}
+				}
+			});
+		</script>
+	</div>
+</body>
+</html>
