@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}Games{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4">Naruto Games</h2>
+        <div class="row">
+            {% for game in games %}
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ game.name }}</h5>
+                        <p class="card-text">{{ game.description }}</p>
+                        {% if game.top_scores %}
+                        <h6>Top Scores:</h6>
+                        <ul class="list-group list-group-flush">
+                            {% for score in game.top_scores %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                {{ score.username }}
+                                <span class="badge bg-primary rounded-pill">{{ score.score }}</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        {% endif %}
+                        {% if game.db_id %}
+<button class="btn btn-primary" onclick="showGameLaunchModal('{{ game.filename }}', '{{ game.name }}', {{ game.db_id }})">PLAY</button>
+{% else %}
+<button class="btn btn-primary" onclick="showGameLaunchModal('{{ game.filename }}', '{{ game.name }}', null)">PLAY</button>
+{% endif %}
+                        {% if game.db_id %}
+                        <a href="{{ url_for('leaderboard.game_leaderboard', game_id=game.db_id) }}" class="btn btn-outline-secondary btn-sm">View Leaderboard</a>
+                        {% else %}
+                        <span class="text-muted small">No leaderboard available</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <a href="{{ url_for('leaderboard.leaderboard') }}" class="btn btn-secondary">View Leaderboard</a>
+    </div>
+</div>
+
+<!-- Game Launch Confirmation Modal -->
+<div class="modal fade" id="gameLaunchModal" tabindex="-1" aria-labelledby="gameLaunchModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="gameLaunchModalLabel">Launch Game?</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Ready to play <strong id="gameName"></strong>?</p>
+                <p class="text-muted">This will launch the game in a new window. Make sure you're ready to begin!</p>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Tip:</strong> Complete the game to submit your score to the leaderboard.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-primary" id="confirmLaunch">
+                    <i class="fas fa-play me-1"></i>Launch Game
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentGameFilename = '';
+let currentGameId = null;
+
+function showGameLaunchModal(filename, gameName, gameId) {
+    currentGameFilename = filename;
+    currentGameId = gameId;
+    document.getElementById('gameName').textContent = gameName;
+    
+    const modal = new bootstrap.Modal(document.getElementById('gameLaunchModal'));
+    modal.show();
+}
+
+document.getElementById('confirmLaunch').addEventListener('click', function() {
+    // Close the modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('gameLaunchModal'));
+    modal.hide();
+    
+    // Redirect to game play page instead of launch (for tkinter games)
+    if (currentGameId) {
+        window.location.href = `/games/play/${currentGameId}`;
+    } else {
+        // Fallback to launch for non-database games
+        window.location.href = `/games/launch_game/${currentGameFilename}`;
+    }
+});
+
+// Handle modal close events to clean up
+document.getElementById('gameLaunchModal').addEventListener('hidden.bs.modal', function () {
+    currentGameFilename = '';
+    currentGameId = null;
+});
+</script>
+{% endblock %}

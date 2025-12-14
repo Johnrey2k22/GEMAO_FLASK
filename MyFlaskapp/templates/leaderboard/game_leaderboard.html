@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+
+{% block title %}{{ game.name }} Leaderboard{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4">{{ game.name }} Leaderboard <small id="updateStatus" class="text-muted">Live</small></h2>
+        <div class="table-responsive">
+            <table id="gameLeaderboardTable" class="table table-striped">
+                <thead>
+                    <tr>
+                        <th data-sort="number">Rank</th>
+                        <th data-sort="string">Username</th>
+                        <th data-sort="number">Score</th>
+                        <th data-sort="date">Date Played</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for score in scores %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ score.username }}</td>
+                        <td>{{ score.score }}</td>
+                        <td>{{ score.date_played }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <a href="{{ url_for('leaderboard.leaderboard') }}" class="btn btn-primary">Global Leaderboard</a>
+        <a href="{{ url_for('games.games_list') }}" class="btn btn-secondary">Back to Games</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const table = document.getElementById('gameLeaderboardTable');
+    const tbody = table.querySelector('tbody');
+    const headers = table.querySelectorAll('th[data-sort]');
+    let sortDirection = {};
+    let updateInterval = null;
+
+    // Function to update game leaderboard data
+    function updateGameLeaderboard() {
+        const statusElement = document.getElementById('updateStatus');
+        statusElement.textContent = 'Updating...';
+        statusElement.className = 'text-warning';
+        
+        fetch('{{ url_for("leaderboard.game_leaderboard_api", game_id=game.id) }}')
+            .then(response => response.json())
+            .then(data => {
+                // Check if data has changed
+                const newDataString = JSON.stringify(data);
+                const currentDataString = Array.from(tbody.querySelectorAll('tr')).map(row => {
+                    return {
+                        rank: row.children[0].textContent,
+                        username: row.children[1].textContent,
+                        score: row.children[2].textContent,
+                        date: row.children[3].textContent
+                    };
+                });
+
+                if (JSON.stringify(currentDataString) !== newDataString) {
+                    // Clear existing rows
+                    tbody.innerHTML = '';
+
+                    // Add new rows
+                    data.forEach((score, index) => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${index + 1}</td>
+                            <td>${score.username}</td>
+                            <td>${score.score}</td>
+                            <td>${score.date_played}</td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+
+                    // Add a subtle animation to indicate update
+                    table.style.transition = 'opacity 0.3s';
+                    table.style.opacity = '0.7';
+                    setTimeout(() => {
+                        table.style.opacity = '1';
+                    }, 300);
+                }
+                
+                statusElement.textContent = 'Live';
+                statusElement.className = 'text-success';
+            })
+            .catch(error => {
+                console.error('Error updating game leaderboard:', error);
+                statusElement.textContent = 'Offline';
+                statusElement.className = 'text-danger';
+            });
+    }
+
+    // Start real-time updates
+    function startRealtimeUpdates() {
+        updateInterval = setInterval(updateGameLeaderboard, 5000); // Update every 5 seconds
+    }
+
+    // Stop real-time updates
+    function stopRealtimeUpdates() {
+        if (updateInterval) {
+            clearInterval(updateInterval);
+            updateInterval = null;
+        }
+    }
+
+    // Initial update
+    updateGameLeaderboard();
+    startRealtimeUpdates();
+
+    // Pause updates when user is interacting with sorting
+    let isSorting = false;
+
+    headers.forEach(header => {
+        header.style.cursor = 'pointer';
+        header.addEventListener('click', function() {
+            if (isSorting) return; // Prevent multiple sorts
+            
+            isSorting = true;
+            stopRealtimeUpdates(); // Pause updates during sorting
+            
+            const column = this.getAttribute('data-sort');
+            const columnIndex = Array.from(this.parentNode.children).indexOf(this);
+            
+            // Toggle sort direction
+            sortDirection[columnIndex] = sortDirection[columnIndex] === 'asc' ? 'desc' : 'asc';
+            
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            
+            rows.sort((a, b) => {
+                let aVal = a.children[columnIndex].textContent.trim();
+                let bVal = b.children[columnIndex].textContent.trim();
+                
+                if (column === 'number') {
+                    aVal = parseFloat(aVal) || 0;
+                    bVal = parseFloat(bVal) || 0;
+                } else if (column === 'date') {
+                    aVal = new Date(aVal);
+                    bVal = new Date(bVal);
+                }
+                
+                if (sortDirection[columnIndex] === 'asc') {
+                    return aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
+                } else {
+                    return aVal < bVal ? 1 : aVal > bVal ? -1 : 0;
+                }
+            });
+            
+            // Re-append sorted rows
+            rows.forEach(row => tbody.appendChild(row));
+            
+            // Update rank column after sorting
+            rows.forEach((row, index) => {
+                row.children[0].textContent = index + 1;
+            });
+            
+            // Update header indicators
+            headers.forEach(h => h.textContent = h.textContent.replace(' ↑', '').replace(' ↓', ''));
+            this.textContent += sortDirection[columnIndex] === 'asc' ? ' ↑' : ' ↓';
+
+            // Resume updates after sorting is complete
+            setTimeout(() => {
+                isSorting = false;
+                startRealtimeUpdates();
+            }, 100);
+        });
+    });
+
+    // Handle page visibility changes (pause when tab is not visible)
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+            stopRealtimeUpdates();
+        } else {
+            updateGameLeaderboard(); // Immediate update when tab becomes visible
+            startRealtimeUpdates();
+        }
+    });
+});
+</script>
+{% endblock %}

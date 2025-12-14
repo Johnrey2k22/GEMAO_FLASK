@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block title %}Register{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="text-center">User Registration</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <div class="mb-3">
+                            <label for="firstname" class="form-label">First Name</label>
+                            <input type="text" class="form-control" id="firstname" name="firstname" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="lastname" class="form-label">Last Name</label>
+                            <input type="text" class="form-control" id="lastname" name="lastname" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="username" name="username" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                            <small class="form-text text-muted">Password must be at least 8 characters with uppercase, lowercase, digit, and special character.</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirm_password" class="form-label">Confirm Password</label>
+                            <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="birthdate" class="form-label">Birthdate</label>
+                            <input type="date" class="form-control" id="birthdate" name="birthdate" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="address" class="form-label">Address</label>
+                            <textarea class="form-control" id="address" name="address" rows="3" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="mobile" class="form-label">Mobile Number</label>
+                            <input type="text" class="form-control" id="mobile" name="mobile" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Register</button>
+                    </form>
+                    <div class="text-center mt-3">
+                        <a href="{{ url_for('auth.login') }}">Already have an account? Login</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const password = document.getElementById('password');
+    const confirmPassword = document.getElementById('confirm_password');
+    const email = document.getElementById('email');
+    
+    // Real-time password validation
+    password.addEventListener('input', function() {
+        validatePassword(this);
+    });
+    
+    // Confirm password validation
+    confirmPassword.addEventListener('input', function() {
+        validateConfirmPassword(this);
+    });
+    
+    // Email validation
+    email.addEventListener('input', function() {
+        validateEmail(this);
+    });
+    
+    // Form submission validation
+    form.addEventListener('submit', function(e) {
+        if (!validateForm()) {
+            e.preventDefault();
+        }
+    });
+    
+    function validatePassword(input) {
+        const value = input.value;
+        const requirements = {
+            length: value.length >= 8,
+            uppercase: /[A-Z]/.test(value),
+            lowercase: /[a-z]/.test(value),
+            digit: /\d/.test(value),
+            special: /[!@#$%^&*(),.?":{}|<>]/.test(value)
+        };
+        
+        const isValid = Object.values(requirements).every(req => req);
+        input.classList.toggle('is-valid', isValid);
+        input.classList.toggle('is-invalid', !isValid && value.length > 0);
+        
+        return isValid;
+    }
+    
+    function validateConfirmPassword(input) {
+        const isValid = input.value === password.value && input.value.length > 0;
+        input.classList.toggle('is-valid', isValid);
+        input.classList.toggle('is-invalid', !isValid && input.value.length > 0);
+        return isValid;
+    }
+    
+    function validateEmail(input) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const isValid = emailRegex.test(input.value);
+        input.classList.toggle('is-valid', isValid);
+        input.classList.toggle('is-invalid', !isValid && input.value.length > 0);
+        return isValid;
+    }
+    
+    function validateForm() {
+        let isValid = true;
+        
+        // Check all required fields
+        const requiredFields = form.querySelectorAll('[required]');
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                field.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                field.classList.remove('is-invalid');
+                field.classList.add('is-valid');
+            }
+        });
+        
+        // Specific validations
+        if (!validatePassword(password)) isValid = false;
+        if (!validateConfirmPassword(confirmPassword)) isValid = false;
+        if (!validateEmail(email)) isValid = false;
+        
+        return isValid;
+    }
+});
+</script>
+{% endblock %}

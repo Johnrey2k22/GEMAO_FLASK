@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Profile{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-header text-white py-3">
+                <h3 class="mb-0">Edit Profile</h3>
+                <small>Update your personal information</small>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="firstname" class="form-label">First Name</label>
+                                <input type="text" class="form-control" id="firstname" name="firstname" value="{{ user.firstname }}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="lastname" class="form-label">Last Name</label>
+                                <input type="text" class="form-control" id="lastname" name="lastname" value="{{ user.lastname }}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="birthdate" class="form-label">Birthdate</label>
+                                <input type="date" class="form-control" id="birthdate" name="birthdate" value="{{ user.birthdate }}">
+                            </div>
+                            <div class="mb-3">
+                                <label for="age" class="form-label">Age</label>
+                                <input type="text" class="form-control" id="age" value="{{ age }}" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="mobile_number" class="form-label">Contact Number</label>
+                                <input type="text" class="form-control" id="mobile_number" name="mobile_number" value="{{ user.mobile_number }}">
+                            </div>
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}">
+                            </div>
+                            <div class="mb-3">
+                                <label for="personal_intro" class="form-label">Personal Intro</label>
+                                <textarea class="form-control" id="personal_intro" name="personal_intro" rows="3">{{ user.personal_intro }}</textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="dream_it_job" class="form-label">Dream IT Job</label>
+                                <input type="text" class="form-control" id="dream_it_job" name="dream_it_job" value="{{ user.dream_it_job }}">
+                            </div>
+                            <div class="mb-3">
+                                <label for="profile_image" class="form-label">Profile Image</label>
+                                <input type="file" class="form-control" id="profile_image" name="profile_image" accept="image/*">
+                                {% if user.profile_image %}
+                                <img src="{{ url_for('static', filename=user.profile_image) }}" alt="Profile Image" class="mt-2" style="max-width: 100px;">
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Update Profile</button>
+                    <a href="{{ url_for('user.dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

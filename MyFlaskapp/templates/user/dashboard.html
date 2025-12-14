@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Ninja Dashboard{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-header text-white py-3">
+                <h3 class="mb-0">Welcome, {{ session.get('user_name', 'User') }}!</h3>
+                <small>Your dashboard</small>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <h5>User Profile</h5>
+                    <ul class="mb-0">
+                        <li><strong>Full Name:</strong> {{ session.user_info.firstname }} {{ session.user_info.lastname }}</li>
+                        <li><strong>Birthdate:</strong> {{ session.user_info.birthdate }}</li>
+                        <li><strong>Address:</strong> {{ session.user_info.address }}</li>
+                        <li><strong>Mobile Number:</strong> {{ session.user_info.mobile_number }}</li>
+                        <li><strong>Email:</strong> {{ session.user_info.email }}</li>
+                    </ul>
+                    <a href="{{ url_for('user.profile') }}" class="btn btn-primary btn-sm mt-2">Edit Profile</a>
+                </div>
+                
+                                
+                            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

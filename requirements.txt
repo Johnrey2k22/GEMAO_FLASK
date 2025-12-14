@@ -1,0 +1,8 @@
+Flask==2.3.3
+mysql-connector-python==8.1.0
+pygame==2.6.1
+Flask-Mail==0.9.1
+Flask-WTF==1.2.1
+python-magic==0.4.27
+python-dotenv==1.0.0
+# Tkinter is included with Python standard library, no additional package needed
