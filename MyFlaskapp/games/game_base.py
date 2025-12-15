@@ -139,13 +139,9 @@ class GameBase(ABC):
                 # 1. Update Game Logic
                 self.update()
                 
-                # 2. Draw Frame
-                # Clear canvas (Immediate mode simulation)
-                self.canvas.delete("all") 
+                # 2. Draw Frame (only dynamic elements)
+                # Note: Canvas is NOT cleared here to preserve static elements
                 self.draw()
-                
-                # Draw Score HUD
-                self.canvas.create_text(10, 10, anchor="nw", text=f"Score: {self.score}", fill=self.WHITE, font=self.font_style)
 
             else:
                 # Game Over State

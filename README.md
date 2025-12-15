@@ -1,4 +1,4 @@
-# GEMAO Flask Naruto Game Platform
+# NinjaVerse Flask Naruto Game Platform
 
 A production-ready Flask web application featuring Naruto-themed games, user authentication, and leaderboards.
 
@@ -43,7 +43,7 @@ Blueprint-based structure:
 1. **Clone the repository**:
    ```bash
    git clone <repository-url>
-   cd GEMAO-FLASK
+   cd NinjaVerse-FLASK
    ```
 
 2. **Create virtual environment**:

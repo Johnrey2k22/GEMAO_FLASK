@@ -6,28 +6,74 @@
 <div class="row">
     <div class="col-12">
         <h2 class="mb-4">{{ game.name }} Leaderboard <small id="updateStatus" class="text-muted">Live</small></h2>
-        <div class="table-responsive">
-            <table id="gameLeaderboardTable" class="table table-striped">
-                <thead>
-                    <tr>
-                        <th data-sort="number">Rank</th>
-                        <th data-sort="string">Username</th>
-                        <th data-sort="number">Score</th>
-                        <th data-sort="date">Date Played</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for score in scores %}
-                    <tr>
-                        <td>{{ loop.index }}</td>
-                        <td>{{ score.username }}</td>
-                        <td>{{ score.score }}</td>
-                        <td>{{ score.date_played }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        
+        <!-- View Toggle Buttons -->
+        <div class="btn-group mb-3" role="group">
+            <button type="button" class="btn btn-primary" id="personalViewBtn" onclick="switchView('personal')">
+                My Scores
+            </button>
+            <button type="button" class="btn btn-outline-primary" id="globalViewBtn" onclick="switchView('global')">
+                Global Leaderboard
+            </button>
         </div>
+        
+        <!-- Personal Scores Section -->
+        <div id="personalScoresSection" class="mb-4">
+            <h4 class="mb-3">Your Personal Scores</h4>
+            <div class="table-responsive">
+                <table id="personalTable" class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th data-sort="number">Rank</th>
+                            <th data-sort="number">Score</th>
+                            <th data-sort="date">Date Played</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for score in user_scores %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td>{{ score.score }}</td>
+                            <td>{{ score.date_played }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% if user_scores|length == 0 %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> You haven't played this game yet. <a href="{{ url_for('games.games_list') }}">Start playing!</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Global Scores Section -->
+        <div id="globalScoresSection" class="mb-4" style="display: none;">
+            <h4 class="mb-3">Global Leaderboard</h4>
+            <div class="table-responsive">
+                <table id="globalTable" class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th data-sort="number">Rank</th>
+                            <th data-sort="string">Username</th>
+                            <th data-sort="number">Score</th>
+                            <th data-sort="date">Date Played</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for score in global_scores %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td>{{ score.username }}</td>
+                            <td>{{ score.score }}</td>
+                            <td>{{ score.date_played }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
         <a href="{{ url_for('leaderboard.leaderboard') }}" class="btn btn-primary">Global Leaderboard</a>
         <a href="{{ url_for('games.games_list') }}" class="btn btn-secondary">Back to Games</a>
     </div>
@@ -37,11 +83,38 @@
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const table = document.getElementById('gameLeaderboardTable');
-    const tbody = table.querySelector('tbody');
-    const headers = table.querySelectorAll('th[data-sort]');
-    let sortDirection = {};
+    const personalTable = document.getElementById('personalTable');
+    const globalTable = document.getElementById('globalTable');
+    const personalSection = document.getElementById('personalScoresSection');
+    const globalSection = document.getElementById('globalScoresSection');
+    const personalBtn = document.getElementById('personalViewBtn');
+    const globalBtn = document.getElementById('globalViewBtn');
+    
+    let currentView = '{{ view_type }}' || 'personal';
     let updateInterval = null;
+
+    // Initialize view
+    switchView(currentView);
+
+    // Function to switch between views
+    function switchView(view) {
+        currentView = view;
+        
+        if (view === 'personal') {
+            personalSection.style.display = 'block';
+            globalSection.style.display = 'none';
+            personalBtn.className = 'btn btn-primary';
+            globalBtn.className = 'btn btn-outline-primary';
+        } else {
+            personalSection.style.display = 'none';
+            globalSection.style.display = 'block';
+            personalBtn.className = 'btn btn-outline-primary';
+            globalBtn.className = 'btn btn-primary';
+        }
+        
+        // Update data for current view
+        updateGameLeaderboard();
+    }
 
     // Function to update game leaderboard data
     function updateGameLeaderboard() {
@@ -49,43 +122,46 @@ document.addEventListener('DOMContentLoaded', function() {
         statusElement.textContent = 'Updating...';
         statusElement.className = 'text-warning';
         
-        fetch('{{ url_for("leaderboard.game_leaderboard_api", game_id=game.id) }}')
+        const apiUrl = currentView === 'personal' 
+            ? '{{ url_for("leaderboard.game_leaderboard_api", game_id=game.id) }}?view=personal'
+            : '{{ url_for("leaderboard.game_leaderboard_api", game_id=game.id) }}?view=global';
+        
+        fetch(apiUrl)
             .then(response => response.json())
             .then(data => {
-                // Check if data has changed
-                const newDataString = JSON.stringify(data);
-                const currentDataString = Array.from(tbody.querySelectorAll('tr')).map(row => {
-                    return {
-                        rank: row.children[0].textContent,
-                        username: row.children[1].textContent,
-                        score: row.children[2].textContent,
-                        date: row.children[3].textContent
-                    };
-                });
+                const scores = currentView === 'personal' ? data.user_scores : data.global_scores;
+                const table = currentView === 'personal' ? personalTable : globalTable;
+                const tbody = table.querySelector('tbody');
+                
+                // Clear existing rows
+                tbody.innerHTML = '';
 
-                if (JSON.stringify(currentDataString) !== newDataString) {
-                    // Clear existing rows
-                    tbody.innerHTML = '';
-
-                    // Add new rows
-                    data.forEach((score, index) => {
-                        const row = document.createElement('tr');
+                // Add new rows
+                scores.forEach((score, index) => {
+                    const row = document.createElement('tr');
+                    if (currentView === 'personal') {
+                        row.innerHTML = `
+                            <td>${index + 1}</td>
+                            <td>${score.score}</td>
+                            <td>${score.date_played}</td>
+                        `;
+                    } else {
                         row.innerHTML = `
                             <td>${index + 1}</td>
                             <td>${score.username}</td>
                             <td>${score.score}</td>
                             <td>${score.date_played}</td>
                         `;
-                        tbody.appendChild(row);
-                    });
+                    }
+                    tbody.appendChild(row);
+                });
 
-                    // Add a subtle animation to indicate update
-                    table.style.transition = 'opacity 0.3s';
-                    table.style.opacity = '0.7';
-                    setTimeout(() => {
-                        table.style.opacity = '1';
-                    }, 300);
-                }
+                // Add a subtle animation to indicate update
+                table.style.transition = 'opacity 0.3s';
+                table.style.opacity = '0.7';
+                setTimeout(() => {
+                    table.style.opacity = '1';
+                }, 300);
                 
                 statusElement.textContent = 'Live';
                 statusElement.className = 'text-success';
@@ -114,64 +190,6 @@ document.addEventListener('DOMContentLoaded', function() {
     updateGameLeaderboard();
     startRealtimeUpdates();
 
-    // Pause updates when user is interacting with sorting
-    let isSorting = false;
-
-    headers.forEach(header => {
-        header.style.cursor = 'pointer';
-        header.addEventListener('click', function() {
-            if (isSorting) return; // Prevent multiple sorts
-            
-            isSorting = true;
-            stopRealtimeUpdates(); // Pause updates during sorting
-            
-            const column = this.getAttribute('data-sort');
-            const columnIndex = Array.from(this.parentNode.children).indexOf(this);
-            
-            // Toggle sort direction
-            sortDirection[columnIndex] = sortDirection[columnIndex] === 'asc' ? 'desc' : 'asc';
-            
-            const rows = Array.from(tbody.querySelectorAll('tr'));
-            
-            rows.sort((a, b) => {
-                let aVal = a.children[columnIndex].textContent.trim();
-                let bVal = b.children[columnIndex].textContent.trim();
-                
-                if (column === 'number') {
-                    aVal = parseFloat(aVal) || 0;
-                    bVal = parseFloat(bVal) || 0;
-                } else if (column === 'date') {
-                    aVal = new Date(aVal);
-                    bVal = new Date(bVal);
-                }
-                
-                if (sortDirection[columnIndex] === 'asc') {
-                    return aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
-                } else {
-                    return aVal < bVal ? 1 : aVal > bVal ? -1 : 0;
-                }
-            });
-            
-            // Re-append sorted rows
-            rows.forEach(row => tbody.appendChild(row));
-            
-            // Update rank column after sorting
-            rows.forEach((row, index) => {
-                row.children[0].textContent = index + 1;
-            });
-            
-            // Update header indicators
-            headers.forEach(h => h.textContent = h.textContent.replace(' ↑', '').replace(' ↓', ''));
-            this.textContent += sortDirection[columnIndex] === 'asc' ? ' ↑' : ' ↓';
-
-            // Resume updates after sorting is complete
-            setTimeout(() => {
-                isSorting = false;
-                startRealtimeUpdates();
-            }, 100);
-        });
-    });
-
     // Handle page visibility changes (pause when tab is not visible)
     document.addEventListener('visibilitychange', function() {
         if (document.hidden) {
@@ -182,5 +200,80 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+// Make switchView available globally for button clicks
+function switchView(view) {
+    const personalSection = document.getElementById('personalScoresSection');
+    const globalSection = document.getElementById('globalScoresSection');
+    const personalBtn = document.getElementById('personalViewBtn');
+    const globalBtn = document.getElementById('globalViewBtn');
+    
+    if (view === 'personal') {
+        personalSection.style.display = 'block';
+        globalSection.style.display = 'none';
+        personalBtn.className = 'btn btn-primary';
+        globalBtn.className = 'btn btn-outline-primary';
+    } else {
+        personalSection.style.display = 'none';
+        globalSection.style.display = 'block';
+        personalBtn.className = 'btn btn-outline-primary';
+        globalBtn.className = 'btn btn-primary';
+    }
+    
+    // Trigger update for new view
+    const statusElement = document.getElementById('updateStatus');
+    statusElement.textContent = 'Updating...';
+    statusElement.className = 'text-warning';
+    
+    const apiUrl = view === 'personal' 
+        ? '{{ url_for("leaderboard.game_leaderboard_api", game_id=game.id) }}?view=personal'
+        : '{{ url_for("leaderboard.game_leaderboard_api", game_id=game.id) }}?view=global';
+    
+    fetch(apiUrl)
+        .then(response => response.json())
+        .then(data => {
+            const scores = view === 'personal' ? data.user_scores : data.global_scores;
+            const table = view === 'personal' ? document.getElementById('personalTable') : document.getElementById('globalTable');
+            const tbody = table.querySelector('tbody');
+            
+            // Clear existing rows
+            tbody.innerHTML = '';
+
+            // Add new rows
+            scores.forEach((score, index) => {
+                const row = document.createElement('tr');
+                if (view === 'personal') {
+                    row.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td>${score.score}</td>
+                        <td>${score.date_played}</td>
+                    `;
+                } else {
+                    row.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td>${score.username}</td>
+                        <td>${score.score}</td>
+                        <td>${score.date_played}</td>
+                    `;
+                }
+                tbody.appendChild(row);
+            });
+
+            // Add a subtle animation to indicate update
+            table.style.transition = 'opacity 0.3s';
+            table.style.opacity = '0.7';
+            setTimeout(() => {
+                table.style.opacity = '1';
+            }, 300);
+            
+            statusElement.textContent = 'Live';
+            statusElement.className = 'text-success';
+        })
+        .catch(error => {
+            console.error('Error updating game leaderboard:', error);
+            statusElement.textContent = 'Offline';
+            statusElement.className = 'text-danger';
+        });
+}
 </script>
 {% endblock %}

@@ -14,7 +14,7 @@ def get_db_connection():
             database=current_app.config.get('DB_NAME', 'gemao_db')
         )
         if conn.is_connected():
-            print("Connected to database: gemao_db")
+            print("Connected to database:   gemao_db")
             return conn
     except Error as e:
         print(f"Error connecting to MySQL: {e}")

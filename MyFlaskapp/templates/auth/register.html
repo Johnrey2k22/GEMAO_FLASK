@@ -3,52 +3,242 @@
 {% block title %}Register{% endblock %}
 
 {% block content %}
+<style>
+/* Custom styles for modern registration form */
+.registration-card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    background: #ffffff;
+}
+
+.registration-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px 12px 0 0;
+    border: none;
+    padding: 1.5rem;
+}
+
+.registration-header h3 {
+    color: white;
+    font-weight: 600;
+    margin: 0;
+    text-shadow: none;
+    font-size: 1.5rem;
+}
+
+.registration-body {
+    padding: 2rem;
+    background: #ffffff;
+}
+
+.form-control {
+    height: 45px;
+    border: 2px solid #e1e5e9;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    padding: 0.75rem 1rem;
+}
+
+.form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.form-label {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+}
+
+.form-text {
+    color: #6c757d !important;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+.requirements-list {
+    background: #f8f9fa;
+    border-radius: 6px;
+    padding: 0.75rem;
+    margin-top: 0.5rem;
+    border-left: 3px solid #667eea;
+}
+
+.requirements-list ul {
+    margin: 0;
+    padding-left: 1.2rem;
+}
+
+.requirements-list li {
+    color: #495057;
+    font-size: 0.8rem;
+    line-height: 1.4;
+    margin-bottom: 0.25rem;
+}
+
+.requirement-met {
+    color: #28a745 !important;
+    text-decoration: line-through;
+    font-weight: 600;
+}
+
+.required-asterisk {
+    color: #dc3545;
+    font-weight: bold;
+    margin-left: 0.25rem;
+}
+
+.mb-3 {
+    margin-bottom: 1.5rem !important;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 8px;
+    padding: 0.75rem;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+}
+</style>
 <div class="container mt-5">
     <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
+        <div class="col-md-8">
+            <div class="card registration-card">
+                <div class="card-header registration-header">
                     <h3 class="text-center">User Registration</h3>
                 </div>
-                <div class="card-body">
+                <div class="card-body registration-body">
                     <form method="POST">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                         <div class="mb-3">
-                            <label for="firstname" class="form-label">First Name</label>
+                            <label for="firstname" class="form-label">First Name<span class="required-asterisk">*</span></label>
                             <input type="text" class="form-control" id="firstname" name="firstname" required>
+                            <div id="firstname-feedback" class="form-text"></div>
+                            <div id="firstname-requirements" class="form-text requirements-list">
+                                <small>First name requirements:</small>
+                                <ul class="mb-0 ps-3 small">
+                                    <li id="req-firstname-length">2-50 characters</li>
+                                    <li id="req-firstname-letters">Letters only (no numbers)</li>
+                                    <li id="req-firstname-format">First letter capitalized</li>
+                                </ul>
+                            </div>
                         </div>
                         <div class="mb-3">
-                            <label for="lastname" class="form-label">Last Name</label>
+                            <label for="lastname" class="form-label">Last Name<span class="required-asterisk">*</span></label>
                             <input type="text" class="form-control" id="lastname" name="lastname" required>
+                            <div id="lastname-feedback" class="form-text"></div>
+                            <div id="lastname-requirements" class="form-text requirements-list">
+                                <small>Last name requirements:</small>
+                                <ul class="mb-0 ps-3 small">
+                                    <li id="req-lastname-length">2-50 characters</li>
+                                    <li id="req-lastname-letters">Letters only (no numbers)</li>
+                                    <li id="req-lastname-format">First letter capitalized</li>
+                                </ul>
+                            </div>
                         </div>
                         <div class="mb-3">
-                            <label for="username" class="form-label">Username</label>
+                            <label for="username" class="form-label">Username<span class="required-asterisk">*</span></label>
                             <input type="text" class="form-control" id="username" name="username" required>
+                            <div id="username-feedback" class="form-text"></div>
+                            <div id="username-requirements" class="form-text requirements-list">
+                                <small>Username requirements:</small>
+                                <ul class="mb-0 ps-3 small">
+                                    <li id="req-username-length">3-20 characters</li>
+                                    <li id="req-username-chars">Letters, numbers, underscores only</li>
+                                    <li id="req-username-start">Start with letter or underscore</li>
+                                    <li id="req-username-no-space">No spaces allowed</li>
+                                </ul>
+                            </div>
                         </div>
                         <div class="mb-3">
-                            <label for="email" class="form-label">Email</label>
+                            <label for="email" class="form-label">Email<span class="required-asterisk">*</span></label>
                             <input type="email" class="form-control" id="email" name="email" required>
+                            <div id="email-feedback" class="form-text"></div>
+                            <div id="email-requirements" class="form-text requirements-list">
+                                <small>Email requirements:</small>
+                                <ul class="mb-0 ps-3 small">
+                                    <li id="req-email-format">Valid email format (user@domain.com)</li>
+                                    <li id="req-email-domain">Valid domain extension</li>
+                                    <li id="req-email-no-space">No spaces allowed</li>
+                                </ul>
+                            </div>
                         </div>
                         <div class="mb-3">
-                            <label for="password" class="form-label">Password</label>
+                            <label for="password" class="form-label">Password<span class="required-asterisk">*</span></label>
                             <input type="password" class="form-control" id="password" name="password" required>
-                            <small class="form-text text-muted">Password must be at least 8 characters with uppercase, lowercase, digit, and special character.</small>
+                            <div id="password-feedback" class="form-text"></div>
+                            <div id="password-requirements" class="form-text requirements-list">
+                                <small>Password requirements:</small>
+                                <ul class="mb-0 ps-3 small">
+                                    <li id="req-length">At least 8 characters</li>
+                                    <li id="req-uppercase">One uppercase letter (A-Z)</li>
+                                    <li id="req-lowercase">One lowercase letter (a-z)</li>
+                                    <li id="req-digit">One digit (0-9)</li>
+                                    <li id="req-special">One special character (!@#$%^&*)</li>
+                                    <li id="req-no-common">Not a common password</li>
+                                    <li id="req-no-username">Different from username</li>
+                                </ul>
+                            </div>
                         </div>
                         <div class="mb-3">
-                            <label for="confirm_password" class="form-label">Confirm Password</label>
+                            <label for="confirm_password" class="form-label">Confirm Password<span class="required-asterisk">*</span></label>
                             <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                            <div id="confirm_password-feedback" class="form-text"></div>
+                            <div id="confirm_password-requirements" class="form-text requirements-list">
+                                <small>Confirm password requirements:</small>
+                                <ul class="mb-0 ps-3 small">
+                                    <li id="req-confirm-match">Must match password field</li>
+                                    <li id="req-confirm-not-empty">Cannot be empty</li>
+                                </ul>
+                            </div>
                         </div>
                         <div class="mb-3">
-                            <label for="birthdate" class="form-label">Birthdate</label>
+                            <label for="birthdate" class="form-label">Birthdate<span class="required-asterisk">*</span></label>
                             <input type="date" class="form-control" id="birthdate" name="birthdate" required>
+                            <div id="birthdate-feedback" class="form-text"></div>
+                            <div id="birthdate-requirements" class="form-text requirements-list">
+                                <small>Birthdate requirements:</small>
+                                <ul class="mb-0 ps-3 small">
+                                    <li id="req-birthdate-age">Must be at least 13 years old</li>
+                                    <li id="req-birthdate-max">Not more than 120 years old</li>
+                                    <li id="req-birthdate-valid">Valid date required</li>
+                                </ul>
+                            </div>
                         </div>
                         <div class="mb-3">
-                            <label for="address" class="form-label">Address</label>
+                            <label for="address" class="form-label">Address<span class="required-asterisk">*</span></label>
                             <textarea class="form-control" id="address" name="address" rows="3" required></textarea>
+                            <div id="address-feedback" class="form-text"></div>
+                            <div id="address-requirements" class="form-text requirements-list">
+                                <small>Address requirements:</small>
+                                <ul class="mb-0 ps-3 small">
+                                    <li id="req-address-length">10-200 characters</li>
+                                    <li id="req-address-content">Include street and city details</li>
+                                    <li id="req-address-no-symbols">No special symbols (!@#$%^&*)</li>
+                                </ul>
+                            </div>
                         </div>
                         <div class="mb-3">
-                            <label for="mobile" class="form-label">Mobile Number</label>
+                            <label for="mobile" class="form-label">Mobile Number<span class="required-asterisk">*</span></label>
                             <input type="text" class="form-control" id="mobile" name="mobile" required>
+                            <div id="mobile-feedback" class="form-text"></div>
+                            <div id="mobile-requirements" class="form-text requirements-list">
+                                <small>Mobile number requirements:</small>
+                                <ul class="mb-0 ps-3 small">
+                                    <li id="req-mobile-digits">At least 10 digits</li>
+                                    <li id="req-mobile-format">Valid phone format</li>
+                                    <li id="req-mobile-chars">Numbers, +, -, spaces, () allowed</li>
+                                </ul>
+                            </div>
                         </div>
                         <button type="submit" class="btn btn-primary w-100">Register</button>
                     </form>
@@ -66,9 +256,17 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.querySelector('form');
+    
+    // DEFINE VARIABLES HERE
     const password = document.getElementById('password');
     const confirmPassword = document.getElementById('confirm_password');
     const email = document.getElementById('email');
+    const firstname = document.getElementById('firstname');
+    const lastname = document.getElementById('lastname');
+    const username = document.getElementById('username');
+    const address = document.getElementById('address');
+    const mobile = document.getElementById('mobile');
+    const birthdate = document.getElementById('birthdate');
     
     // Real-time password validation
     password.addEventListener('input', function() {
@@ -85,6 +283,31 @@ document.addEventListener('DOMContentLoaded', function() {
         validateEmail(this);
     });
     
+    // Add validation for other fields
+    firstname.addEventListener('input', function() {
+        validateFirstName(this);
+    });
+    
+    lastname.addEventListener('input', function() {
+        validateLastName(this);
+    });
+    
+    username.addEventListener('input', function() {
+        validateUsername(this);
+    });
+    
+    address.addEventListener('input', function() {
+        validateAddress(this);
+    });
+    
+    mobile.addEventListener('input', function() {
+        validateMobile(this);
+    });
+    
+    birthdate.addEventListener('input', function() {
+        validateBirthdate(this);
+    });
+    
     // Form submission validation
     form.addEventListener('submit', function(e) {
         if (!validateForm()) {
@@ -94,33 +317,392 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function validatePassword(input) {
         const value = input.value;
+        const feedback = document.getElementById('password-feedback');
+        // We fetch these again to get current values dynamically
+        const usernameVal = document.getElementById('username').value.toLowerCase();
+        const emailVal = document.getElementById('email').value.toLowerCase();
+        
+        // Common passwords list (basic)
+        const commonPasswords = ['password', '12345678', 'qwerty123', 'password123', 'admin123', 'welcome123'];
+        
         const requirements = {
             length: value.length >= 8,
             uppercase: /[A-Z]/.test(value),
             lowercase: /[a-z]/.test(value),
             digit: /\d/.test(value),
-            special: /[!@#$%^&*(),.?":{}|<>]/.test(value)
+            special: /[!@#$%^&*]/.test(value),
+            noCommon: !commonPasswords.includes(value.toLowerCase()),
+            noUsername: usernameVal && value.toLowerCase() !== usernameVal && value.toLowerCase() !== usernameVal.replace(/[^a-z]/g, ''),
+            noEmail: emailVal && !value.toLowerCase().includes(emailVal.split('@')[0])
         };
         
         const isValid = Object.values(requirements).every(req => req);
         input.classList.toggle('is-valid', isValid);
         input.classList.toggle('is-invalid', !isValid && value.length > 0);
         
+        // Update requirement indicators
+        updateRequirementIndicator('req-length', requirements.length);
+        updateRequirementIndicator('req-uppercase', requirements.uppercase);
+        updateRequirementIndicator('req-lowercase', requirements.lowercase);
+        updateRequirementIndicator('req-digit', requirements.digit);
+        updateRequirementIndicator('req-special', requirements.special);
+        updateRequirementIndicator('req-no-common', requirements.noCommon);
+        updateRequirementIndicator('req-no-username', requirements.noUsername && requirements.noEmail);
+        
+        // Show specific error messages
+        if (value.length > 0 && !isValid) {
+            const errors = [];
+            if (!requirements.length) errors.push('at least 8 characters');
+            if (!requirements.uppercase) errors.push('one uppercase letter');
+            if (!requirements.lowercase) errors.push('one lowercase letter');
+            if (!requirements.digit) errors.push('one digit');
+            if (!requirements.special) errors.push('one special character');
+            if (!requirements.noCommon) errors.push('avoid common passwords');
+            if (!requirements.noUsername) errors.push('different from username/email');
+            
+            feedback.innerHTML = `<span class="text-danger">Password must contain: ${errors.join(', ')}</span>`;
+            feedback.style.display = 'block';
+        } else if (isValid) {
+            feedback.innerHTML = '<span class="text-success">Password strength: Strong</span>';
+            feedback.style.display = 'block';
+        } else {
+            feedback.innerHTML = '';
+            feedback.style.display = 'none';
+        }
+        
         return isValid;
     }
     
+    function updateRequirementIndicator(reqId, isValid) {
+        const element = document.getElementById(reqId);
+        if (element) {
+            if (isValid) {
+                element.style.color = '#28a745';
+                element.style.textDecoration = 'line-through';
+                element.style.fontWeight = '600';
+                element.classList.add('requirement-met');
+            } else {
+                element.style.color = '#495057';
+                element.style.textDecoration = 'none';
+                element.style.fontWeight = 'normal';
+                element.classList.remove('requirement-met');
+            }
+        }
+    }
+    
     function validateConfirmPassword(input) {
-        const isValid = input.value === password.value && input.value.length > 0;
+        const feedback = document.getElementById('confirm_password-feedback');
+        const passwordValue = password.value;
+        const isValid = input.value === passwordValue && input.value.length > 0 && passwordValue.length > 0;
         input.classList.toggle('is-valid', isValid);
         input.classList.toggle('is-invalid', !isValid && input.value.length > 0);
+        
+        // Update requirement indicators
+        updateRequirementIndicator('req-confirm-match', input.value === passwordValue && input.value.length > 0);
+        updateRequirementIndicator('req-confirm-not-empty', input.value.length > 0);
+        
+        if (input.value.length > 0 && !isValid) {
+            feedback.innerHTML = '<span class="text-danger">Passwords do not match or password is empty</span>';
+            feedback.style.display = 'block';
+        } else if (isValid) {
+            feedback.innerHTML = '<span class="text-success">Passwords match</span>';
+            feedback.style.display = 'block';
+        } else {
+            feedback.innerHTML = '';
+            feedback.style.display = 'none';
+        }
+        
+        return isValid;
+    }
+    
+    // REMOVED DUPLICATE SIMPLE validateEmail FUNCTION HERE
+    
+    function validateRequiredField(input, feedbackId, errorMessage) {
+        const feedback = document.getElementById(feedbackId);
+        const isValid = input.value.trim().length > 0;
+        input.classList.toggle('is-valid', isValid);
+        input.classList.toggle('is-invalid', !isValid && input.value.length > 0);
+        
+        if (input.value.length > 0 && !isValid) {
+            feedback.innerHTML = `<span class="text-danger">${errorMessage}</span>`;
+            feedback.style.display = 'block';
+        } else if (isValid) {
+            feedback.innerHTML = '<span class="text-success">Valid</span>';
+            feedback.style.display = 'block';
+        } else {
+            feedback.innerHTML = '';
+            feedback.style.display = 'none';
+        }
+        
+        return isValid;
+    }
+    
+    function validateFirstName(input) {
+        const value = input.value.trim();
+        const feedback = document.getElementById('firstname-feedback');
+        const requirements = {
+            length: value.length >= 2 && value.length <= 50,
+            letters: /^[a-zA-Z\s-']+$/.test(value),
+            format: /^[A-Z][a-zA-Z\s-']*$/.test(value)
+        };
+        
+        const isValid = Object.values(requirements).every(req => req);
+        input.classList.toggle('is-valid', isValid);
+        input.classList.toggle('is-invalid', !isValid && value.length > 0);
+        
+        // Update requirement indicators
+        updateRequirementIndicator('req-firstname-length', requirements.length);
+        updateRequirementIndicator('req-firstname-letters', requirements.letters);
+        updateRequirementIndicator('req-firstname-format', requirements.format);
+        
+        if (value.length > 0 && !isValid) {
+            const errors = [];
+            if (!requirements.length) errors.push('2-50 characters');
+            if (!requirements.letters) errors.push('letters only');
+            if (!requirements.format) errors.push('first letter capitalized');
+            
+            feedback.innerHTML = `<span class="text-danger">First name must contain: ${errors.join(', ')}</span>`;
+            feedback.style.display = 'block';
+        } else if (isValid) {
+            feedback.innerHTML = '<span class="text-success">Valid first name</span>';
+            feedback.style.display = 'block';
+        } else {
+            feedback.innerHTML = '';
+            feedback.style.display = 'none';
+        }
+        
+        return isValid;
+    }
+    
+    function validateLastName(input) {
+        const value = input.value.trim();
+        const feedback = document.getElementById('lastname-feedback');
+        const requirements = {
+            length: value.length >= 2 && value.length <= 50,
+            letters: /^[a-zA-Z\s-']+$/.test(value),
+            format: /^[A-Z][a-zA-Z\s-']*$/.test(value)
+        };
+        
+        const isValid = Object.values(requirements).every(req => req);
+        input.classList.toggle('is-valid', isValid);
+        input.classList.toggle('is-invalid', !isValid && value.length > 0);
+        
+        // Update requirement indicators
+        updateRequirementIndicator('req-lastname-length', requirements.length);
+        updateRequirementIndicator('req-lastname-letters', requirements.letters);
+        updateRequirementIndicator('req-lastname-format', requirements.format);
+        
+        if (value.length > 0 && !isValid) {
+            const errors = [];
+            if (!requirements.length) errors.push('2-50 characters');
+            if (!requirements.letters) errors.push('letters only');
+            if (!requirements.format) errors.push('first letter capitalized');
+            
+            feedback.innerHTML = `<span class="text-danger">Last name must contain: ${errors.join(', ')}</span>`;
+            feedback.style.display = 'block';
+        } else if (isValid) {
+            feedback.innerHTML = '<span class="text-success">Valid last name</span>';
+            feedback.style.display = 'block';
+        } else {
+            feedback.innerHTML = '';
+            feedback.style.display = 'none';
+        }
+        
+        return isValid;
+    }
+    
+    function validateUsername(input) {
+        const value = input.value.trim();
+        const feedback = document.getElementById('username-feedback');
+        const requirements = {
+            length: value.length >= 3 && value.length <= 20,
+            chars: /^[a-zA-Z0-9_]+$/.test(value),
+            start: /^[a-zA-Z_]/.test(value),
+            noSpace: !/\s/.test(value)
+        };
+        
+        const isValid = Object.values(requirements).every(req => req);
+        input.classList.toggle('is-valid', isValid);
+        input.classList.toggle('is-invalid', !isValid && value.length > 0);
+        
+        // Update requirement indicators
+        updateRequirementIndicator('req-username-length', requirements.length);
+        updateRequirementIndicator('req-username-chars', requirements.chars);
+        updateRequirementIndicator('req-username-start', requirements.start);
+        updateRequirementIndicator('req-username-no-space', requirements.noSpace);
+        
+        if (value.length > 0 && !isValid) {
+            const errors = [];
+            if (!requirements.length) errors.push('3-20 characters');
+            if (!requirements.chars) errors.push('letters, numbers, underscores only');
+            if (!requirements.start) errors.push('start with letter or underscore');
+            if (!requirements.noSpace) errors.push('no spaces allowed');
+            
+            feedback.innerHTML = `<span class="text-danger">Username must contain: ${errors.join(', ')}</span>`;
+            feedback.style.display = 'block';
+        } else if (isValid) {
+            feedback.innerHTML = '<span class="text-success">Valid username</span>';
+            feedback.style.display = 'block';
+        } else {
+            feedback.innerHTML = '';
+            feedback.style.display = 'none';
+        }
+        
         return isValid;
     }
     
     function validateEmail(input) {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        const isValid = emailRegex.test(input.value);
+        const value = input.value.trim();
+        const feedback = document.getElementById('email-feedback');
+        const requirements = {
+            format: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value),
+            domain: /\.[a-zA-Z]{2,}$/.test(value),
+            noSpace: !/\s/.test(value)
+        };
+        
+        const isValid = Object.values(requirements).every(req => req);
         input.classList.toggle('is-valid', isValid);
-        input.classList.toggle('is-invalid', !isValid && input.value.length > 0);
+        input.classList.toggle('is-invalid', !isValid && value.length > 0);
+        
+        // Update requirement indicators
+        updateRequirementIndicator('req-email-format', requirements.format);
+        updateRequirementIndicator('req-email-domain', requirements.domain);
+        updateRequirementIndicator('req-email-no-space', requirements.noSpace);
+        
+        if (value.length > 0 && !isValid) {
+            const errors = [];
+            if (!requirements.format) errors.push('valid email format');
+            if (!requirements.domain) errors.push('valid domain extension');
+            if (!requirements.noSpace) errors.push('no spaces allowed');
+            
+            feedback.innerHTML = `<span class="text-danger">Email must contain: ${errors.join(', ')}</span>`;
+            feedback.style.display = 'block';
+        } else if (isValid) {
+            feedback.innerHTML = '<span class="text-success">Valid email format</span>';
+            feedback.style.display = 'block';
+        } else {
+            feedback.innerHTML = '';
+            feedback.style.display = 'none';
+        }
+        
+        return isValid;
+    }
+    
+    function validateAddress(input) {
+        const value = input.value.trim();
+        const feedback = document.getElementById('address-feedback');
+        const requirements = {
+            length: value.length >= 10 && value.length <= 200,
+            content: /\d/.test(value) && /[a-zA-Z]/.test(value),
+            noSymbols: !/[!@#$%^&*]/.test(value)
+        };
+        
+        const isValid = Object.values(requirements).every(req => req);
+        input.classList.toggle('is-valid', isValid);
+        input.classList.toggle('is-invalid', !isValid && value.length > 0);
+        
+        // Update requirement indicators
+        updateRequirementIndicator('req-address-length', requirements.length);
+        updateRequirementIndicator('req-address-content', requirements.content);
+        updateRequirementIndicator('req-address-no-symbols', requirements.noSymbols);
+        
+        if (value.length > 0 && !isValid) {
+            const errors = [];
+            if (!requirements.length) errors.push('10-200 characters');
+            if (!requirements.content) errors.push('include street and city details');
+            if (!requirements.noSymbols) errors.push('no special symbols');
+            
+            feedback.innerHTML = `<span class="text-danger">Address must contain: ${errors.join(', ')}</span>`;
+            feedback.style.display = 'block';
+        } else if (isValid) {
+            feedback.innerHTML = '<span class="text-success">Valid address</span>';
+            feedback.style.display = 'block';
+        } else {
+            feedback.innerHTML = '';
+            feedback.style.display = 'none';
+        }
+        
+        return isValid;
+    }
+    
+    function validateMobile(input) {
+        const value = input.value.trim();
+        const feedback = document.getElementById('mobile-feedback');
+        const digitCount = value.replace(/\D/g, '').length;
+        const requirements = {
+            digits: digitCount >= 10,
+            format: /^[0-9+\-\s()]+$/.test(value),
+            chars: /^[0-9+\-\s()]+$/.test(value)
+        };
+        
+        const isValid = Object.values(requirements).every(req => req);
+        input.classList.toggle('is-valid', isValid);
+        input.classList.toggle('is-invalid', !isValid && value.length > 0);
+        
+        // Update requirement indicators
+        updateRequirementIndicator('req-mobile-digits', requirements.digits);
+        updateRequirementIndicator('req-mobile-format', requirements.format);
+        updateRequirementIndicator('req-mobile-chars', requirements.chars);
+        
+        if (value.length > 0 && !isValid) {
+            const errors = [];
+            if (!requirements.digits) errors.push('at least 10 digits');
+            if (!requirements.format) errors.push('valid phone format');
+            if (!requirements.chars) errors.push('numbers, +, -, spaces, () allowed');
+            
+            feedback.innerHTML = `<span class="text-danger">Mobile number must contain: ${errors.join(', ')}</span>`;
+            feedback.style.display = 'block';
+        } else if (isValid) {
+            feedback.innerHTML = '<span class="text-success">Valid mobile number</span>';
+            feedback.style.display = 'block';
+        } else {
+            feedback.innerHTML = '';
+            feedback.style.display = 'none';
+        }
+        
+        return isValid;
+    }
+    
+    function validateBirthdate(input) {
+        const value = input.value;
+        const feedback = document.getElementById('birthdate-feedback');
+        const today = new Date();
+        const birthDate = new Date(value);
+        const age = today.getFullYear() - birthDate.getFullYear();
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+        const actualAge = monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate()) ? age - 1 : age;
+        
+        const requirements = {
+            minAge: actualAge >= 13,
+            maxAge: actualAge <= 120,
+            valid: birthDate instanceof Date && !isNaN(birthDate)
+        };
+        
+        const isValid = Object.values(requirements).every(req => req);
+        input.classList.toggle('is-valid', isValid);
+        input.classList.toggle('is-invalid', !isValid && value.length > 0);
+        
+        // Update requirement indicators
+        updateRequirementIndicator('req-birthdate-age', requirements.minAge);
+        updateRequirementIndicator('req-birthdate-max', requirements.maxAge);
+        updateRequirementIndicator('req-birthdate-valid', requirements.valid);
+        
+        if (value.length > 0 && !isValid) {
+            const errors = [];
+            if (!requirements.minAge) errors.push('at least 13 years old');
+            if (!requirements.maxAge) errors.push('not more than 120 years old');
+            if (!requirements.valid) errors.push('valid date required');
+            
+            feedback.innerHTML = `<span class="text-danger">Birthdate must contain: ${errors.join(', ')}</span>`;
+            feedback.style.display = 'block';
+        } else if (isValid) {
+            feedback.innerHTML = '<span class="text-success">Valid birthdate</span>';
+            feedback.style.display = 'block';
+        } else {
+            feedback.innerHTML = '';
+            feedback.style.display = 'none';
+        }
+        
         return isValid;
     }
     
@@ -139,13 +721,19 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        // Specific validations
-        if (!validatePassword(password)) isValid = false;
-        if (!validateConfirmPassword(confirmPassword)) isValid = false;
-        if (!validateEmail(email)) isValid = false;
+        // Specific validations for all fields
+        if (!validateFirstName(document.getElementById('firstname'))) isValid = false;
+        if (!validateLastName(document.getElementById('lastname'))) isValid = false;
+        if (!validateUsername(document.getElementById('username'))) isValid = false;
+        if (!validateEmail(document.getElementById('email'))) isValid = false;
+        if (!validatePassword(document.getElementById('password'))) isValid = false;
+        if (!validateConfirmPassword(document.getElementById('confirm_password'))) isValid = false;
+        if (!validateBirthdate(document.getElementById('birthdate'))) isValid = false;
+        if (!validateAddress(document.getElementById('address'))) isValid = false;
+        if (!validateMobile(document.getElementById('mobile'))) isValid = false;
         
         return isValid;
     }
-});
+    });
 </script>
 {% endblock %}

@@ -1,4 +1,4 @@
-# GEMAO Flask - Developer Quick Reference
+# NinjaVerse Flask - Developer Quick Reference
 
 ## Quick Start (60 seconds)
 

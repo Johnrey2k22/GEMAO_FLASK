@@ -62,7 +62,7 @@ def rate_limit(max_attempts=None, window_seconds=None, key_func=None):
                 max_attempts_config = max_attempts
                 
             if window_seconds is None:
-                window_seconds_config = current_app.config.get('LOGIN_ATTEMPT_TIMEOUT_MINUTES', 15) * 60
+                window_seconds_config = current_app.config.get('LOGIN_ATTEMPT_TIMEOUT_MINUTES', 5)
             else:
                 window_seconds_config = window_seconds
             
@@ -74,16 +74,30 @@ def rate_limit(max_attempts=None, window_seconds=None, key_func=None):
             else:
                 key = key_func()
             
+            print(f"DEBUG: Rate limit check - Key: {key}, Attempts: {len(rate_limiter.attempts.get(key, []))}, Max: {max_attempts_config}")
+            
             # Check rate limit
             if rate_limiter.is_rate_limited(key, max_attempts_config, window_seconds_config):
+                print(f"DEBUG: Rate limit exceeded for key: {key}")
                 remaining_time = rate_limiter.get_remaining_time(key, window_seconds_config)
-                from flask import flash
-                flash(f'Too many attempts. Please wait {remaining_time} seconds before trying again.', 'danger')
                 
-                # For login attempts, redirect to login page
+                # Check if this is an AJAX request
+                from flask import request
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    from flask import jsonify
+                    return jsonify({
+                        'status': 'fail',
+                        'message': f'Too many attempts. Please wait {remaining_time} seconds before trying again.'
+                    }), 429
+                
+                # For non-AJAX requests
+                # from flask import flash
+                # flash(f'Too many attempts. Please wait {remaining_time} seconds before trying again.', 'danger')
+                
+                # For login attempts, redirect to landing page
                 if f.__name__ == 'login':
                     from flask import redirect, url_for
-                    return redirect(url_for('auth.login'))
+                    return redirect(url_for('index'))
                 else:
                     # For other endpoints, return error response
                     from flask import jsonify
@@ -115,8 +129,8 @@ def otp_rate_limit(max_attempts=None, window_seconds=None):
             
             if rate_limiter.is_rate_limited(key, max_attempts_config, window_seconds_config):
                 remaining_time = rate_limiter.get_remaining_time(key, window_seconds_config)
-                from flask import flash
-                flash(f'Too many OTP attempts. Please wait {remaining_time} seconds.', 'danger')
+                # from flask import flash
+                # flash(f'Too many OTP attempts. Please wait {remaining_time} seconds.', 'danger')
                 return redirect(url_for('auth.register'))
             
             return f(*args, **kwargs)

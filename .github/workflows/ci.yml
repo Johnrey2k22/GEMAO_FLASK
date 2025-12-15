@@ -16,7 +16,7 @@ jobs:
         env:
           MYSQL_ROOT_PASSWORD: password
           MYSQL_DATABASE: gemao_db
-          MYSQL_USER: gemao_user
+          MYSQL_USER: ninjaverse_user
           MYSQL_PASSWORD: password
         ports:
           - 3306:3306
@@ -40,6 +40,6 @@ jobs:
         pytest tests/ -v
       env:
         MYSQL_HOST: 127.0.0.1
-        MYSQL_USER: gemao_user
+        MYSQL_USER: ninjaverse_user
         MYSQL_PASSWORD: password
         MYSQL_DB: gemao_db

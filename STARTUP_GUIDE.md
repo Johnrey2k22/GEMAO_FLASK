@@ -1,4 +1,4 @@
-# GEMAO Flask Application - Quick Start Guide
+# NinjaVerse Flask Application - Quick Start Guide
 
 ## Prerequisites
 - Python 3.8 or higher
@@ -10,7 +10,7 @@
 ### 1. Database Setup
 Before running the application, ensure MySQL is running:
 - Start MySQL server (via XAMPP Control Panel or standalone)
-- Default credentials: `host=localhost, user=gemao_user, password=password`
+- Default credentials: `host=localhost, user=ninjaverse_user, password=password`
 - If different credentials, update MyFlaskapp/db.py
 
 ### 2. Virtual Environment Setup
@@ -71,7 +71,7 @@ The application will be available at: http://localhost:5000
 
 ## Project Structure
 ```
-GEMAO-FLASK/
+NinjaVerse-FLASK/
 ├── app.py                    # Entry point
 ├── requirements.txt          # Python dependencies
 ├── .env.example              # Environment variables template

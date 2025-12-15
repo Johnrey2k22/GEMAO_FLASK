@@ -6,6 +6,7 @@ A Simon-style memory game where players must repeat sequences of ninja hand sign
 
 # Standard library imports
 import random
+import tkinter as tk
 
 from game_base import GameBase
 
@@ -282,6 +283,7 @@ class HandSignMemoryGame(GameBase):
             self.canvas.itemconfig(self.ui_elements['info_text'], text=f"Game Over! Final Level: {self.score}")
         if 'instruction_text' in self.ui_elements:
             self.canvas.itemconfig(self.ui_elements['instruction_text'], text="Press SPACE or R to Restart | ESC to Quit")
+        self.root.after(3000, self.root.quit)  # Exit main loop after 3 seconds
 
     def restart_game(self):
         """Restart the game"""

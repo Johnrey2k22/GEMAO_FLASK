@@ -29,7 +29,7 @@ class Config:
     
     # Security Configuration
     MAX_LOGIN_ATTEMPTS = int(os.environ.get('MAX_LOGIN_ATTEMPTS', 5))
-    LOGIN_ATTEMPT_TIMEOUT_MINUTES = int(os.environ.get('LOGIN_ATTEMPT_TIMEOUT_MINUTES', 15))
+    LOGIN_ATTEMPT_TIMEOUT_MINUTES = int(os.environ.get('LOGIN_ATTEMPT_TIMEOUT_MINUTES', 0.083))  # ~5 seconds
     OTP_EXPIRY_MINUTES = int(os.environ.get('OTP_EXPIRY_MINUTES', 10))
     OTP_RESEND_COOLDOWN_SECONDS = int(os.environ.get('OTP_RESEND_COOLDOWN_SECONDS', 60))
     

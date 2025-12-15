@@ -1,6 +1,6 @@
 # UI Mockups
 
-This folder contains PNG mockups for the GEMAO Flask app UI designs.
+This folder contains PNG mockups for the NinjaVerse Flask app UI designs.
 
 ## Mockups Included
 

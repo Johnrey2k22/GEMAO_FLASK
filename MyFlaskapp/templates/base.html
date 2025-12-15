@@ -60,10 +60,12 @@
         }
         
         .form-control {
-            background-color: rgba(245, 245, 245, 0.95);
+            background-color: rgba(255, 255, 255, 0.95);
             border: 2px solid var(--naruto-blue);
             color: var(--naruto-black);
             transition: all 0.3s ease;
+            padding: 0.75rem;
+            font-size: 1rem;
         }
         
         .form-control:focus {
@@ -74,9 +76,10 @@
         }
         
         .form-label {
-            color: var(--naruto-yellow);
+            color: var(--naruto-white);
             font-weight: 600;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+            margin-bottom: 0.5rem;
         }
         
         .btn-primary {
@@ -264,7 +267,7 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
             <a class="navbar-brand" href="{{ url_for('auth.login') }}">
-                <i class="fas fa-gamepad me-2"></i>GEMAO
+                <i class="fas fa-gamepad me-2"></i>NinjaVerse
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>

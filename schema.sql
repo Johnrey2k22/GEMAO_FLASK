@@ -1,4 +1,4 @@
--- GEMAO Database Schema
+-- NinjaVerse Database Schema
 -- Run this in phpMyAdmin or MySQL command line
 
 CREATE DATABASE IF NOT EXISTS gemao_db;
@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS user_tb (
     birthdate DATE,
     address VARCHAR(255),
     mobile_number VARCHAR(20),
-    email VARCHAR(100),
+    email VARCHAR(100) UNIQUE,
     profile_image VARCHAR(255),
     personal_intro TEXT,
     dream_it_job VARCHAR(255),

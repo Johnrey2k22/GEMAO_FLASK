@@ -3,10 +3,8 @@ import re
 import random
 import string
 from datetime import datetime, timedelta
-from flask_mail import Message, Mail
+from flask_mail import Message
 from MyFlaskapp.db import get_db_connection
-
-mail = Mail()
 
 def Alert_Success(message):
     flash(message, 'success')
@@ -34,11 +32,20 @@ def validate_password(password):
 def generate_otp():
     return ''.join(random.choices(string.digits, k=6))
 
-def send_otp_email(email, otp):
+def send_otp_email(email, otp, mail):
+    if not mail:
+        print("Error: Mail service not configured")
+        return False
+    
+    if not mail.username or not mail.password:
+        print("Error: Mail credentials not configured - check MAIL_USERNAME and MAIL_PASSWORD environment variables")
+        return False
+    
     msg = Message('Your OTP Verification Code', recipients=[email])
     msg.body = f'Your OTP code is: {otp}. It expires in 10 minutes.'
     try:
         mail.send(msg)
+        print(f"OTP email sent successfully to {email}")
         return True
     except Exception as e:
         print(f"Error sending email: {e}")
@@ -48,10 +55,23 @@ def store_otp(email, otp):
     conn = get_db_connection()
     if conn:
         cursor = conn.cursor()
-        expires_at = datetime.now() + timedelta(minutes=10)
-        cursor.execute("INSERT INTO otp_verification (email, otp, expires_at) VALUES (%s, %s, %s) ON DUPLICATE KEY UPDATE otp=%s, expires_at=%s, verified=FALSE",
-                       (email, otp, expires_at, otp, expires_at))
+        
+        # First delete any existing OTP for this email
+        cursor.execute("DELETE FROM otp_verification WHERE email = %s", (email,))
         conn.commit()
+        
+        # Use MySQL NOW() to ensure consistent timezone
+        cursor.execute("""
+            INSERT INTO otp_verification (email, otp, created_at, expires_at, verified) 
+            VALUES (%s, %s, NOW(), DATE_ADD(NOW(), INTERVAL 10 MINUTE), FALSE)
+        """, (email, otp))
+        conn.commit()
+        
+        # Debug: Verify the OTP was stored
+        cursor.execute("SELECT * FROM otp_verification WHERE email = %s", (email,))
+        stored = cursor.fetchone()
+        print(f"DEBUG: OTP stored for {email}: {stored}")
+        
         conn.close()
         return True
     return False
@@ -60,14 +80,25 @@ def verify_otp(email, otp):
     conn = get_db_connection()
     if conn:
         cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM otp_verification WHERE email = %s AND otp = %s AND expires_at > NOW() AND verified = FALSE",
-                       (email, otp))
+        
+        # Use MySQL NOW() for consistent timezone comparison
+        cursor.execute("""
+            SELECT * FROM otp_verification 
+            WHERE email = %s AND otp = %s AND expires_at > NOW() AND verified = FALSE
+        """, (email, otp))
         record = cursor.fetchone()
+        print(f"DEBUG: OTP verification - Email: {email}, OTP: {otp}, Record found: {record is not None}")
         if record:
+            print(f"DEBUG: OTP record - Created: {record['created_at']}, Expires: {record['expires_at']}")
             cursor.execute("UPDATE otp_verification SET verified = TRUE WHERE id = %s", (record['id'],))
             conn.commit()
             conn.close()
             return True
+        else:
+            # Debug: Check what OTP records exist for this email
+            cursor.execute("SELECT id, email, otp, created_at, expires_at, verified, NOW() as current_time FROM otp_verification WHERE email = %s ORDER BY created_at DESC LIMIT 3", (email,))
+            debug_records = cursor.fetchall()
+            print(f"DEBUG: Existing OTP records for {email}: {debug_records}")
         conn.close()
     return False
 

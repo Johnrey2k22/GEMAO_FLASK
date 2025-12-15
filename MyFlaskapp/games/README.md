@@ -1,6 +1,6 @@
 # Games Directory
 
-This directory contains all the Naruto-themed mini-games for the GEMAO Flask application.
+This directory contains all the Naruto-themed mini-games for the NinjaVerse Flask application.
 
 ## Available Games
 

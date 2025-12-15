@@ -17,9 +17,6 @@ def Alert_Fail(message):
     return {'status': 'fail', 'message': message}
 
 
-@auth_bp.route('/')
-def index():
-    return redirect(url_for('auth.login'))
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():

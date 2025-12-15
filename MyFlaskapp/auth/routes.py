@@ -1,4 +1,4 @@
-from flask import render_template, redirect, url_for, flash, request, session, jsonify
+from flask import render_template, redirect, url_for, flash, request, session, jsonify, current_app
 from functools import wraps
 from . import auth_bp
 from MyFlaskapp.db import get_db_connection
@@ -11,16 +11,32 @@ def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session:
-            return redirect(url_for('auth.login'))
+            return redirect(url_for('index'))
         return f(*args, **kwargs)
     return decorated_function
 
+@auth_bp.route('/test')
+def test():
+    return "Test endpoint working"
+
 @auth_bp.route('/login', methods=['GET', 'POST'])
-@rate_limit(max_attempts=5, window_seconds=900)  # 5 attempts per 15 minutes
+# @rate_limit(max_attempts=5, window_seconds=5)  # 5 attempts per 5 seconds - DISABLED
 def login():
     if request.method == 'POST':
+        print(f"DEBUG: Login request received")
+        print(f"DEBUG: Request headers: {dict(request.headers)}")
+        print(f"DEBUG: Form data: {dict(request.form)}")
+        
         username = request.form.get('username')
         password = request.form.get('password')
+        
+        print(f"DEBUG: Username: {username}, Password: {'***' if password else 'None'}")
+        
+        # Validate input
+        if not username or not password:
+            print("DEBUG: Missing username or password")
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return jsonify({'status': 'fail', 'message': 'Username and password are required'}), 400
         
         conn = get_db_connection()
         if conn:
@@ -38,6 +54,11 @@ def login():
                 session['user_role'] = 'admin' if user['user_type'] in ['admin', ''] else 'user'
                 session['user_info'] = user
                 
+                # Handle AJAX requests from modal
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    redirect_url = url_for('admin.admin_dashboard') if session['user_role'] == 'admin' else url_for('user.dashboard')
+                    return jsonify({'status': 'success', 'redirect': redirect_url})
+                
                 flash('You were successfully logged in', 'success')
                 
                 if session['user_role'] == 'admin':
@@ -45,7 +66,20 @@ def login():
                 else:
                     return redirect(url_for('user.dashboard'))
             else:
+                # Handle AJAX requests from modal
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return jsonify({'status': 'fail', 'message': 'Incorrect Credentials'}), 400
+                
                 flash('Incorrect Credentials', 'danger')
+        else:
+            # Database connection error
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return jsonify({'status': 'fail', 'message': 'Database connection failed'}), 500
+            flash('Database connection failed', 'danger')
+    
+    # For GET requests or failed POST without AJAX, check if this is an AJAX request
+    if request.method == 'GET' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return jsonify({'status': 'fail', 'message': 'Invalid request method'}), 400
     
     return render_template('auth/login.html')
 
@@ -54,10 +88,10 @@ def login():
 def logout():
     session.clear()
     flash('You have been logged out.', 'info')
-    return redirect(url_for('auth.login'))
+    return redirect(url_for('index'))
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
-@rate_limit(max_attempts=3, window_seconds=600)  # 3 registration attempts per 10 minutes
+# @rate_limit(max_attempts=3, window_seconds=600)  # 3 registration attempts per 10 minutes - DISABLED
 def register():
     if request.method == 'POST':
         firstname = request.form.get('firstname')
@@ -94,7 +128,8 @@ def register():
         
         # Generate and send OTP
         otp = generate_otp()
-        if store_otp(email, otp) and send_otp_email(email, otp):
+        mail = current_app.extensions.get('mail')
+        if store_otp(email, otp) and send_otp_email(email, otp, mail):
             session['registration_data'] = {
                 'firstname': firstname,
                 'lastname': lastname,
@@ -106,15 +141,15 @@ def register():
                 'mobile': mobile
             }
             Alert_Success('OTP sent to your email. Please verify.')
-            return redirect(url_for('auth.verify_otp'))
+            return redirect(url_for('auth.verify_otp_route'))
         else:
-            Alert_Fail('Failed to send OTP. Try again.')
+            Alert_Fail('Failed to send OTP. Please check email configuration or try again.')
             return redirect(url_for('auth.register'))
     
     return render_template('auth/register.html')
 
 @auth_bp.route('/verify_otp', methods=['GET', 'POST'])
-@otp_rate_limit(max_attempts=3, window_seconds=600)  # 3 OTP attempts per 10 minutes
+# @otp_rate_limit(max_attempts=3, window_seconds=600)  # 3 OTP attempts per 10 minutes - DISABLED
 def verify_otp_route():
     if 'registration_data' not in session:
         return redirect(url_for('auth.register'))
@@ -150,7 +185,7 @@ def verify_otp_route():
     return render_template('auth/verify_otp.html')
 
 @auth_bp.route('/resend_otp')
-@rate_limit(max_attempts=2, window_seconds=300)  # 2 resend attempts per 5 minutes
+# @rate_limit(max_attempts=2, window_seconds=300)  # 2 resend attempts per 5 minutes - DISABLED
 def resend_otp():
     if 'registration_data' not in session:
         return redirect(url_for('auth.register'))
@@ -158,14 +193,15 @@ def resend_otp():
     email = session['registration_data']['email']
     if can_resend_otp(email):
         otp = generate_otp()
-        if store_otp(email, otp) and send_otp_email(email, otp):
+        mail = current_app.extensions.get('mail')
+        if store_otp(email, otp) and send_otp_email(email, otp, mail):
             Alert_Success('OTP resent to your email.')
         else:
-            Alert_Fail('Failed to resend OTP.')
+            Alert_Fail('Failed to resend OTP. Please check email configuration.')
     else:
         Alert_Fail('Please wait before requesting another OTP.')
     
-    return redirect(url_for('auth.verify_otp'))
+    return redirect(url_for('auth.verify_otp_route'))
 
 @auth_bp.route('/profile', methods=['GET', 'POST'])
 @login_required

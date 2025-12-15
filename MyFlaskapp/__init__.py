@@ -4,6 +4,9 @@ from datetime import timedelta
 from MyFlaskapp.db import create_tables
 from flask_mail import Mail
 from flask_wtf.csrf import CSRFProtect
+from dotenv import load_dotenv
+
+load_dotenv()
 
 def create_app():
     templates_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'templates'))
@@ -41,18 +44,11 @@ def create_app():
     app.register_blueprint(user_bp)
     app.register_blueprint(admin_bp, url_prefix='/admin')
     app.register_blueprint(games_bp, url_prefix='/games')
-    app.register_blueprint(leaderboard_bp)
+    app.register_blueprint(leaderboard_bp, url_prefix='/leaderboard')
     
     @app.route('/')
     def index():
-        if 'user_id' in session:
-            user_role = session.get('user_role')
-            if user_role == 'admin':
-                return redirect(url_for('admin.admin_dashboard'))
-            else:
-                return redirect(url_for('user.dashboard'))
-        else:
-            return render_template('home.html')
+        return render_template('landing.html')
     
     @app.route('/favicon.ico')
     def favicon():

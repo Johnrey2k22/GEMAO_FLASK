@@ -1,4 +1,4 @@
-from flask import render_template, session, redirect, url_for, request, flash
+from flask import render_template, session, redirect, url_for, request, flash, current_app
 from functools import wraps
 from . import admin_bp
 from MyFlaskapp.db import get_db_connection
@@ -88,7 +88,8 @@ def add_user():
         
         # Generate and send OTP
         otp = generate_otp()
-        if store_otp(email, otp) and send_otp_email(email, otp):
+        mail = current_app.extensions.get('mail')
+        if store_otp(email, otp) and send_otp_email(email, otp, mail):
             session['admin_add_user_data'] = {
                 'user_id': user_id,
                 'firstname': firstname,
@@ -150,7 +151,8 @@ def resend_add_user_otp():
     email = session['admin_add_user_data']['email']
     if can_resend_otp(email):
         otp = generate_otp()
-        if store_otp(email, otp) and send_otp_email(email, otp):
+        mail = current_app.extensions.get('mail')
+        if store_otp(email, otp) and send_otp_email(email, otp, mail):
             Alert_Success('OTP resent to the email.')
         else:
             Alert_Fail('Failed to resend OTP.')
