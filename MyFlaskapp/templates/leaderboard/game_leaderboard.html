@@ -7,6 +7,7 @@
     <div class="col-12">
         <h2 class="mb-4">{{ game.name }} Leaderboard <small id="updateStatus" class="text-muted">Live</small></h2>
         
+        {% if session.get('user_role') != 'admin' %}
         <!-- View Toggle Buttons -->
         <div class="btn-group mb-3" role="group">
             <button type="button" class="btn btn-primary" id="personalViewBtn" onclick="switchView('personal')">
@@ -16,7 +17,11 @@
                 Global Leaderboard
             </button>
         </div>
+        {% else %}
+        <!-- Admin View - Only Global Leaderboard -->
+        {% endif %}
         
+        {% if session.get('user_role') != 'admin' %}
         <!-- Personal Scores Section -->
         <div id="personalScoresSection" class="mb-4">
             <h4 class="mb-3">Your Personal Scores</h4>
@@ -46,9 +51,10 @@
                 {% endif %}
             </div>
         </div>
+        {% endif %}
         
         <!-- Global Scores Section -->
-        <div id="globalScoresSection" class="mb-4" style="display: none;">
+        <div id="globalScoresSection" class="mb-4"{% if session.get('user_role') == 'admin' %} style="display: block;"{% else %} style="display: none;"{% endif %}>
             <h4 class="mb-3">Global Leaderboard</h4>
             <div class="table-responsive">
                 <table id="globalTable" class="table table-striped">
@@ -90,7 +96,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const personalBtn = document.getElementById('personalViewBtn');
     const globalBtn = document.getElementById('globalViewBtn');
     
-    let currentView = '{{ view_type }}' || 'personal';
+    let isAdmin = document.body.getAttribute('data-user-role') === 'admin';
+    let currentView = isAdmin ? 'global' : ('{{ view_type }}' || 'personal');
     let updateInterval = null;
 
     // Initialize view
@@ -98,6 +105,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Function to switch between views
     function switchView(view) {
+        if (isAdmin && view === 'personal') {
+            return; // Prevent admins from switching to personal view
+        }
+        
         currentView = view;
         
         if (view === 'personal') {
@@ -203,6 +214,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Make switchView available globally for button clicks
 function switchView(view) {
+    if (isAdmin && view === 'personal') {
+        return; // Prevent admins from switching to personal view
+    }
+    
     const personalSection = document.getElementById('personalScoresSection');
     const globalSection = document.getElementById('globalScoresSection');
     const personalBtn = document.getElementById('personalViewBtn');
