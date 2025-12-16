@@ -1,4 +1,7 @@
 import pytest
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from unittest.mock import patch, MagicMock
 from MyFlaskapp.utils import generate_otp, verify_otp, store_otp, validate_email, validate_password
 

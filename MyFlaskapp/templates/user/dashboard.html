@@ -14,11 +14,9 @@
                 <div class="alert alert-info">
                     <h5>User Profile</h5>
                     <ul class="mb-0">
-                        <li><strong>Full Name:</strong> {{ session.user_info.firstname }} {{ session.user_info.lastname }}</li>
-                        <li><strong>Birthdate:</strong> {{ session.user_info.birthdate }}</li>
-                        <li><strong>Address:</strong> {{ session.user_info.address }}</li>
-                        <li><strong>Mobile Number:</strong> {{ session.user_info.mobile_number }}</li>
-                        <li><strong>Email:</strong> {{ session.user_info.email }}</li>
+                        <li><strong>Full Name:</strong> {{ session.get('user_name', 'N/A') }}</li>
+                        <li><strong>Username:</strong> {{ session.get('username', 'N/A') }}</li>
+                        <li><strong>Email:</strong> {{ session.get('email', 'N/A') }}</li>
                     </ul>
                     <a href="{{ url_for('user.profile') }}" class="btn btn-primary btn-sm mt-2">Edit Profile</a>
                 </div>

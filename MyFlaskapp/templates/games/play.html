@@ -16,7 +16,7 @@
                 <div class="mb-4">
                     <h5>Launch Game</h5>
                     <div class="d-flex gap-2 mb-3">
-                        <a href="{{ url_for('games.launch_game', game_id=game.id) }}" class="btn btn-primary">
+                        <a href="{{ url_for('games.launch_game_by_filename', game_filename=game.filename) }}" class="btn btn-primary">
                             <i class="bi bi-play-circle"></i> Launch Game
                         </a>
                         <button type="button" class="btn btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#manualInstructions">
@@ -37,7 +37,7 @@
                 <!-- Score Submission Section -->
                 <div class="mb-4">
                     <h5>Submit Score</h5>
-                    <form method="POST" action="{{ url_for('games.submit_score', game_id=game.id) }}">
+                    <form method="POST" action="{{ url_for('games.submit_score_by_filename', game_filename=game.filename) }}">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                         <div class="mb-3">
                             <label for="score" class="form-label">Enter your score:</label>

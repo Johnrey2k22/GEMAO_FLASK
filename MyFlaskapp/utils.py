@@ -55,23 +55,12 @@ def store_otp(email, otp):
     conn = get_db_connection()
     if conn:
         cursor = conn.cursor()
-        
-        # First delete any existing OTP for this email
-        cursor.execute("DELETE FROM otp_verification WHERE email = %s", (email,))
+        cursor.execute(
+            "INSERT INTO otp_verification (email, otp, created_at, expires_at, verified) "
+            "VALUES (%s, %s, NOW(), DATE_ADD(NOW(), INTERVAL 10 MINUTE), FALSE)",
+            (email, otp)
+        )
         conn.commit()
-        
-        # Use MySQL NOW() to ensure consistent timezone
-        cursor.execute("""
-            INSERT INTO otp_verification (email, otp, created_at, expires_at, verified) 
-            VALUES (%s, %s, NOW(), DATE_ADD(NOW(), INTERVAL 10 MINUTE), FALSE)
-        """, (email, otp))
-        conn.commit()
-        
-        # Debug: Verify the OTP was stored
-        cursor.execute("SELECT * FROM otp_verification WHERE email = %s", (email,))
-        stored = cursor.fetchone()
-        print(f"DEBUG: OTP stored for {email}: {stored}")
-        
         conn.close()
         return True
     return False
@@ -80,25 +69,19 @@ def verify_otp(email, otp):
     conn = get_db_connection()
     if conn:
         cursor = conn.cursor(dictionary=True)
-        
-        # Use MySQL NOW() for consistent timezone comparison
         cursor.execute("""
-            SELECT * FROM otp_verification 
+            SELECT id
+            FROM otp_verification 
             WHERE email = %s AND otp = %s AND expires_at > NOW() AND verified = FALSE
         """, (email, otp))
         record = cursor.fetchone()
-        print(f"DEBUG: OTP verification - Email: {email}, OTP: {otp}, Record found: {record is not None}")
         if record:
-            print(f"DEBUG: OTP record - Created: {record['created_at']}, Expires: {record['expires_at']}")
-            cursor.execute("UPDATE otp_verification SET verified = TRUE WHERE id = %s", (record['id'],))
-            conn.commit()
+            record_id = record.get('id') if isinstance(record, dict) else None
+            if record_id is not None:
+                cursor.execute("UPDATE otp_verification SET verified = TRUE WHERE id = %s", (record_id,))
+                conn.commit()
             conn.close()
             return True
-        else:
-            # Debug: Check what OTP records exist for this email
-            cursor.execute("SELECT id, email, otp, created_at, expires_at, verified, NOW() as current_time FROM otp_verification WHERE email = %s ORDER BY created_at DESC LIMIT 3", (email,))
-            debug_records = cursor.fetchall()
-            print(f"DEBUG: Existing OTP records for {email}: {debug_records}")
         conn.close()
     return False
 
@@ -124,6 +107,6 @@ def can_resend_otp(email):
             if isinstance(last_sent, str):
                 last_sent = datetime.fromisoformat(last_sent.replace('Z', '+00:00'))
             time_diff = datetime.now() - last_sent
-            return time_diff.total_seconds() > 60  # 1 minute throttle
+            return time_diff.total_seconds() > 60
         return True
     return False

@@ -486,3 +486,36 @@ def submit_score(game_id):
     else:
         flash('Failed to submit score.', 'danger')
     return redirect(url_for('games.games_list'))
+
+@games_bp.route('/submit_score/<game_filename>', methods=['POST'])
+@login_required
+@user_role_required
+def submit_score_by_filename(game_filename):
+    """Submit score using game filename."""
+    score = request.form.get('score', type=int)
+    user_id = session['user_id']
+    
+    # Get or create game in database to get the ID
+    games = scan_games_directory()
+    game = None
+    for g in games:
+        if g['filename'] == game_filename:
+            game = g
+            break
+    
+    if not game:
+        flash('Game not found.', 'danger')
+        return redirect(url_for('games.games_list'))
+    
+    # Get or create database entry for this game
+    game_db_id = get_or_create_game_in_db(game)
+    if game_db_id:
+        from MyFlaskapp.db import submit_score as db_submit_score
+        if db_submit_score(user_id, game_db_id, score):
+            flash('Score submitted!', 'success')
+        else:
+            flash('Failed to submit score.', 'danger')
+    else:
+        flash('Failed to find game in database.', 'danger')
+    
+    return redirect(url_for('games.games_list'))

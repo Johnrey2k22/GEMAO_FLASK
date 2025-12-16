@@ -2,6 +2,7 @@
 Security utilities for file validation and other security functions
 """
 import os
+import uuid
 try:
     import magic
 except ImportError:

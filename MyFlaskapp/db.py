@@ -3,6 +3,13 @@ import mysql.connector
 from mysql.connector import Error
 from werkzeug.security import generate_password_hash
 from flask import current_app
+import time
+import threading
+
+_TOP_SCORES_CACHE = {}
+_TOP_SCORES_LOCK = threading.Lock()
+_TOP_SCORES_TTL = 60  # seconds
+
 
 def get_db_connection():
     """Establishes a connection to the MySQL database."""
@@ -81,49 +88,7 @@ def create_tables():
                     INDEX idx_game_score (game_id, score)
                 )
             """)
-            # Tournaments table
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS tournaments_tb (
-                    id INT AUTO_INCREMENT PRIMARY KEY,
-                    name VARCHAR(100),
-                    game_id INT,
-                    creator_id INT,
-                    status ENUM('open', 'ongoing', 'completed') DEFAULT 'open',
-                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                    FOREIGN KEY (game_id) REFERENCES games_tb(id),
-                    FOREIGN KEY (creator_id) REFERENCES user_tb(id)
-                )
-            """)
-            # Tournament participants
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS tournament_participants_tb (
-                    id INT AUTO_INCREMENT PRIMARY KEY,
-                    tournament_id INT,
-                    user_id INT,
-                    joined_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                    FOREIGN KEY (tournament_id) REFERENCES tournaments_tb(id),
-                    FOREIGN KEY (user_id) REFERENCES user_tb(id)
-                )
-            """)
-            # Matches table
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS matches_tb (
-                    id INT AUTO_INCREMENT PRIMARY KEY,
-                    tournament_id INT,
-                    round_num INT,
-                    player1_id INT,
-                    player2_id INT,
-                    winner_id INT,
-                    score1 INT,
-                    score2 INT,
-                    status ENUM('pending', 'completed') DEFAULT 'pending',
-                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                    FOREIGN KEY (tournament_id) REFERENCES tournaments_tb(id),
-                    FOREIGN KEY (player1_id) REFERENCES user_tb(id),
-                    FOREIGN KEY (player2_id) REFERENCES user_tb(id),
-                    FOREIGN KEY (winner_id) REFERENCES user_tb(id)
-                )
-            """)
+            
             # OTP Verification table
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS otp_verification (
@@ -181,6 +146,14 @@ if __name__ == '__main__':
     create_tables()
 
 def get_top_scores_for_game(game_id, limit=10):
+    key = (game_id, limit)
+    now = time.time()
+    with _TOP_SCORES_LOCK:
+        cached = _TOP_SCORES_CACHE.get(key)
+        if cached is not None:
+            ts, data = cached
+            if now - ts < _TOP_SCORES_TTL:
+                return data
     conn = get_db_connection()
     scores = []
     if conn:
@@ -195,6 +168,9 @@ def get_top_scores_for_game(game_id, limit=10):
         """, (game_id, limit))
         scores = cursor.fetchall()
         conn.close()
+    current_ts = time.time()
+    with _TOP_SCORES_LOCK:
+        _TOP_SCORES_CACHE[key] = (current_ts, scores)
     return scores
 
 def get_all_scores_for_game(game_id):
